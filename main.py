@@ -1,9 +1,14 @@
 from stify import Stify
 from utube import Utube
 
-s = Stify()
-utube = Utube()
+def run():
+    s = Stify()
+    utube = Utube()
 
-for playlist in s.playlists:
-    for track in playlist.tracks:
-        utube.download(track, playlist.name)
+    for playlist in s.playlists:
+        for track in playlist.tracks:
+            utube.download(track, playlist.name)
+
+
+if __name__ == '__main__':
+    run()
