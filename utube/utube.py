@@ -4,7 +4,7 @@ import youtube_dl
 from urllib import request, parse
 from bs4 import BeautifulSoup
 from youtube_dl.postprocessor.common import PostProcessor
-from utils import safe_path
+from utils import safe_path, exp_backoff
 
 
 LOCAL_PATH = os.environ.get('LOCAL_PATH')
@@ -40,6 +40,20 @@ class Utube:
             return f"{YOUTUBE_URL}{vid['href']}"
 
     def download(self, track, playlist):
+        def _download(track, ydl_opts, retries=0):
+            if retries == 100:
+                return
+            try:
+                url = self._get_url(track)
+                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                    metadata = SpotifyMetadata(ydl, track)
+                    ydl.add_post_processor(metadata)
+                    ydl.download([url])
+            except Exception as ex:
+                print(ex)
+                exp_backoff(retries)
+                _download(track, ydl_opts, retries + 1)
+
         destination = os.path.join(LOCAL_PATH, safe_path(playlist))
         if not os.path.exists(destination):
             os.makedirs(destination)
@@ -59,8 +73,4 @@ class Utube:
                 'outtmpl': output
             }
 
-            url = self._get_url(track)
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                metadata = SpotifyMetadata(ydl, track)
-                ydl.add_post_processor(metadata)
-                ydl.download([url])
+            _download(track, ydl_opts)
