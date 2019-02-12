@@ -2,12 +2,28 @@ import os
 
 from spotipy import util, Spotify
 
+#TODO load sp once
 
 SCOPE = 'user-library-read,playlist-read-private,playlist-read-collaborative'
 USERNAME = os.environ.get('SPOTIFY_USERNAME')
 
-token = util.prompt_for_user_token(USERNAME, SCOPE)
-sp = Spotify(auth=token)
+
+class Auth:
+    def __init__(self):
+        self._sp = None
+
+    @property
+    def sp(self):
+        if self._sp is None:
+            self._auth()
+        return self._sp
+
+    def _auth(self):
+        token = util.prompt_for_user_token(USERNAME, SCOPE)
+        self._sp = Spotify(auth=token)
+
+
+auth = Auth()
 
 
 class Stify:
@@ -17,7 +33,7 @@ class Stify:
     @property
     def playlists(self):
         if self._playlists is None:
-            self._playlists = sp.user_playlists(USERNAME)
+            self._playlists = auth.sp.user_playlists(USERNAME)
         return [Playlist(playlist) for playlist in self._playlists['items']]
 
 
@@ -41,10 +57,10 @@ class Playlist:
         if self._tracks is not None:
             return self._tracks
 
-        results = sp.user_playlist(USERNAME, self.id, fields="tracks,next")
+        results = auth.sp.user_playlist(USERNAME, self.id, fields="tracks,next")
         self._tracks = list(gen_tracks(results['tracks']))
         while results['tracks']['next']:
-            self._tracks += list(gen_tracks(sp.next(results['tracks'])))
+            self._tracks += list(gen_tracks(auth.sp.next(results['tracks'])))
         return self._tracks
 
     def update_tracks(self):
