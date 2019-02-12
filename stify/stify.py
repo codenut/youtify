@@ -2,7 +2,6 @@ import os
 
 from spotipy import util, Spotify
 
-#TODO load sp once
 
 SCOPE = 'user-library-read,playlist-read-private,playlist-read-collaborative'
 USERNAME = os.environ.get('SPOTIFY_USERNAME')
@@ -50,17 +49,20 @@ class Playlist:
         return self._tracks
 
     def _get_tracks(self):
-        def gen_tracks(tracks):
-            for i, track in enumerate(tracks['items']):
-                yield Track(track['track'])
+        def gen_tracks():
+            results = auth.sp.user_playlist(USERNAME, self.id,
+                                            fields="tracks,next")
+            tracks = results['tracks']
+
+            while tracks:
+                for i, track in enumerate(tracks['items']):
+                    yield Track(track['track'])
+                tracks = auth.sp.next(tracks)
 
         if self._tracks is not None:
             return self._tracks
 
-        results = auth.sp.user_playlist(USERNAME, self.id, fields="tracks,next")
-        self._tracks = list(gen_tracks(results['tracks']))
-        while results['tracks']['next']:
-            self._tracks += list(gen_tracks(auth.sp.next(results['tracks'])))
+        self._tracks = list(gen_tracks())
         return self._tracks
 
     def update_tracks(self):
