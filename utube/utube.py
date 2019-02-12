@@ -7,7 +7,7 @@ from youtube_dl.postprocessor.common import PostProcessor
 from utils import safe_path
 
 
-LOCAL_PATH = '/home/michael/Dropbox/codenut/Audios'
+LOCAL_PATH = os.environ.get('LOCAL_PATH')
 YOUTUBE_URL = 'https://www.youtube.com'
 
 
