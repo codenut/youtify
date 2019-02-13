@@ -41,7 +41,7 @@ class Utube:
 
     def download(self, track, playlist):
         def _download(track, ydl_opts, retries=0):
-            if retries == 100:
+            if retries == 3:
                 return
             try:
                 url = self._get_url(track)
