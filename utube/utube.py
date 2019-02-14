@@ -68,11 +68,17 @@ class Utube:
         else:
             ydl_opts = {
                 'format': 'bestaudio/best',
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '192',
-                }],
+                'writethumbnail': True,
+                'postprocessors': [
+                    {
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': '192',
+                    },
+                    {
+                        'key': 'EmbedThumbnail'
+                    }
+                ],
                 'progress_hooks': [progress_hook],
                 'outtmpl': os.path.join(destination, title)
             }
