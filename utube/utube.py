@@ -40,27 +40,30 @@ class Utube:
             return f"{YOUTUBE_URL}{vid['href']}"
 
     def download(self, track, playlist):
-        def _download(track, ydl_opts, retries=0):
+        url = self._get_url(track)
+        destination = os.path.join(LOCAL_PATH, safe_path(playlist),
+                                   f'{safe_path(track)}.mp3')
+        self.download_from_url(url, destination)
+
+    def download_from_url(self, url, destination):
+        def _download(url, ydl_opts, retries=0):
             if retries == 3:
                 return
             try:
-                url = self._get_url(track)
                 with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                    metadata = SpotifyMetadata(ydl, track)
-                    ydl.add_post_processor(metadata)
+                    # metadata = SpotifyMetadata(ydl, track)
+                    # ydl.add_post_processor(metadata)
                     ydl.download([url])
             except Exception as ex:
                 print(ex)
                 exp_backoff(retries)
-                _download(track, ydl_opts, retries + 1)
+                _download(url, ydl_opts, retries + 1)
 
-        destination = os.path.join(LOCAL_PATH, safe_path(playlist))
         if not os.path.exists(destination):
             os.makedirs(destination)
 
-        output = os.path.join(destination, f'{safe_path(track)}.mp3')
-        if os.path.isfile(output):
-            print(f'File already downloaded {output}. Skipping...')
+        if os.path.isfile(destination):
+            print(f'File already downloaded {destination}. Skipping...')
         else:
             ydl_opts = {
                 'format': 'bestaudio/best',
@@ -70,7 +73,7 @@ class Utube:
                     'preferredquality': '192',
                 }],
                 'progress_hooks': [progress_hook],
-                'outtmpl': output
+                'outtmpl': destination
             }
 
-            _download(track, ydl_opts)
+            _download(url, ydl_opts)
