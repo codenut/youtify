@@ -72,7 +72,9 @@ class Playlist:
 class Track:
     def __init__(self, track):
         self.artist = track['artists'][0]['name']
-        self.name = track['name']
+        self.title = track['name']
+        self.album = track['album']['name']
+        self.disc_number = track['disc_number']
 
     def __repr__(self):
-        return f'{self.name} - {self.artist}'
+        return f'{self.title} - {self.artist}'
