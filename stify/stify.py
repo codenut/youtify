@@ -2,7 +2,6 @@ import os
 
 from spotipy import util, Spotify
 
-
 SCOPE = 'user-library-read,playlist-read-private,playlist-read-collaborative'
 USERNAME = os.environ.get('SPOTIFY_USERNAME')
 
@@ -50,13 +49,14 @@ class Playlist:
 
     def _get_tracks(self):
         def gen_tracks():
-            results = auth.sp.user_playlist(USERNAME, self.id,
-                                            fields="tracks,next")
+            results = auth.sp.user_playlist(
+                USERNAME, self.id, fields="tracks,next")
             tracks = results['tracks']
 
             while tracks:
                 for i, track in enumerate(tracks['items']):
-                    yield Track(track['track'])
+                    if track['track']:
+                        yield Track(track['track'])
                 tracks = auth.sp.next(tracks)
 
         if self._tracks is not None:
