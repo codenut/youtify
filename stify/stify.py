@@ -1,27 +1,10 @@
 import os
 
-from spotipy import util, Spotify
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 
-SCOPE = 'user-library-read,playlist-read-private,playlist-read-collaborative'
 USERNAME = os.environ.get('SPOTIFY_USERNAME')
-
-
-class Auth:
-    def __init__(self):
-        self._sp = None
-
-    @property
-    def sp(self):
-        if self._sp is None:
-            self._auth()
-        return self._sp
-
-    def _auth(self):
-        token = util.prompt_for_user_token(USERNAME, SCOPE)
-        self._sp = Spotify(auth=token)
-
-
-auth = Auth()
+sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials())
 
 
 class Stify:
@@ -31,7 +14,7 @@ class Stify:
     @property
     def playlists(self):
         if self._playlists is None:
-            self._playlists = auth.sp.user_playlists(USERNAME)
+            self._playlists = sp.user_playlists(USERNAME)
         return [Playlist(playlist) for playlist in self._playlists['items']]
 
 
@@ -49,15 +32,16 @@ class Playlist:
 
     def _get_tracks(self):
         def gen_tracks():
-            results = auth.sp.user_playlist(
+            results = sp.user_playlist(
                 USERNAME, self.id, fields="tracks,next")
             tracks = results['tracks']
+            print(tracks)
 
             while tracks:
                 for i, track in enumerate(tracks['items']):
                     if track['track']:
                         yield Track(track['track'])
-                tracks = auth.sp.next(tracks)
+                tracks = sp.next(tracks)
 
         if self._tracks is not None:
             return self._tracks

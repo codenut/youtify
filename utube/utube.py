@@ -1,8 +1,8 @@
 import os
-import youtube_dl
+import yt_dlp
 
 from .exceptions import VideoNotFoundException
-from youtube_dl.postprocessor.ffmpeg import FFmpegMetadataPP
+from yt_dlp.postprocessor.ffmpeg import FFmpegMetadataPP
 from utils import safe_path, exp_backoff
 from googleapiclient.discovery import build
 
@@ -67,7 +67,7 @@ class Utube:
             if retries == 3:
                 return
             try:
-                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     if metadata:
                         ydl.add_post_processor(
                             FFmpegMP3MetadataPP(ydl, metadata))

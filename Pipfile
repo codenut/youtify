@@ -7,8 +7,9 @@ verify_ssl = true
 
 [packages]
 spotipy = "*"
-youtube-dl = "*"
 google-api-python-client = "*"
+spotify = "*"
+yt-dlp = "*"
 
 [requires]
 python_version = "3.7"
