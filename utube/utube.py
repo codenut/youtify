@@ -5,6 +5,7 @@ from .exceptions import VideoNotFoundException
 from yt_dlp.postprocessor.ffmpeg import FFmpegMetadataPP
 from utils import safe_path, exp_backoff
 from googleapiclient.discovery import build
+from persistence import get_youtube_url, insert_track
 
 
 LOCAL_PATH = os.environ.get('LOCAL_PATH')
@@ -36,6 +37,10 @@ class FFmpegMP3MetadataPP(FFmpegMetadataPP):
 
 class Utube:
     def _get_url(self, track):
+        url_from_db = get_youtube_url(str(track))
+        if url_from_db:
+            return url_from_db
+
         search_response = youtube.search().list(
             q=str(track),
             part='id',
@@ -44,25 +49,27 @@ class Utube:
         ).execute()
         if len(search_response['items']) > 0:
             video_id = search_response['items'][0]['id']['videoId']
-            return f'{YOUTUBE_URL}/watch?v={video_id}'
+            url = f'{YOUTUBE_URL}/watch?v={video_id}'
+            insert_track(str(track), url)
+
+            return url
         else:
             raise VideoNotFoundException(f'Video not found {track}')
 
     def download(self, track, playlist):
         destination = self.mkdir(os.path.join(LOCAL_PATH, safe_path(playlist)))
-
-        outtmpl = os.path.join(destination, f'{safe_path(track)}.utube')
-        if self.is_file(outtmpl, 'mp3'):
-            print(f'File already downloaded {outtmpl}. Skipping...')
+        base_filename = os.path.join(destination, f'{safe_path(track)}')
+        if self.is_file(base_filename, 'mp3'):
+            print(f'File already downloaded {base_filename}.mp3. Skipping...')
         else:
             try:
                 url = self._get_url(track)
                 metadata = track.__dict__
-                self.download_from_url(url, outtmpl=outtmpl, metadata=metadata)
+                self.download_from_url(url, base_filename, metadata=metadata)
             except VideoNotFoundException as ex:
                 print(ex)
 
-    def download_from_url(self, url, outtmpl=None, metadata=None):
+    def download_from_url(self, url, base_filename, metadata=None):
         def _download(url, ydl_opts, retries=0):
             if retries == 3:
                 return
@@ -92,8 +99,8 @@ class Utube:
             ],
             'progress_hooks': [progress_hook],
         }
-        if outtmpl:
-            ydl_opts['outtmpl'] = outtmpl
+        if base_filename:
+            ydl_opts['outtmpl'] = base_filename
 
         _download(url, ydl_opts)
 

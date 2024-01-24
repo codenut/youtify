@@ -35,7 +35,6 @@ class Playlist:
             results = sp.user_playlist(
                 USERNAME, self.id, fields="tracks,next")
             tracks = results['tracks']
-            print(tracks)
 
             while tracks:
                 for i, track in enumerate(tracks['items']):
